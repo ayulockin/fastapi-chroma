@@ -1,6 +1,7 @@
 import os
 import chromadb
 from chromadb.config import Settings
+from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 
 # Set cache directory to /tmp (only writable location on Vercel)
 os.environ["CHROMA_CACHE_DIR"] = "/tmp/chroma"
@@ -20,8 +21,14 @@ def query_vectordb(query: str) -> dict:
     """
     Returns: {"context": str, "docs_id": list[str]}
     """    
-    collection_name = os.environ.get("CHROMA_COLLECTION", "people_ops")
-    collection = _client.get_collection(name=collection_name)
+    collection_name = os.environ.get("CHROMA_COLLECTION", "people_ops_openai")
+    collection = _client.get_collection(
+        name=collection_name,
+        embedding_function=OpenAIEmbeddingFunction(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            model_name="text-embedding-3-small"
+        )
+    )
 
     res = collection.query(query_texts=[query], n_results=3, include=["documents", "metadatas", "distances"])
 
