@@ -1,31 +1,25 @@
 import os
 import chromadb
+from chromadb.config import Settings
 
-# Set cache directory to /tmp (only writable dir in Vercel serverless)
-os.environ["HF_HOME"] = "/tmp/huggingface"
-os.environ["TRANSFORMERS_CACHE"] = "/tmp/transformers"
-os.environ["SENTENCE_TRANSFORMERS_HOME"] = "/tmp/sentence_transformers"
+# Set cache directory to /tmp (only writable location on Vercel)
+os.environ["CHROMA_CACHE_DIR"] = "/tmp/chroma"
 
-print(f"[DEBUG] Cache directories set:")
-print(f"  HF_HOME: {os.environ.get('HF_HOME')}")
-print(f"  TRANSFORMERS_CACHE: {os.environ.get('TRANSFORMERS_CACHE')}")
-print(f"  SENTENCE_TRANSFORMERS_HOME: {os.environ.get('SENTENCE_TRANSFORMERS_HOME')}")
-
-# Create the client once at import time to avoid re-init on every request
 _client = chromadb.CloudClient(
     api_key=os.environ["CHROMA_API_KEY"],
     tenant=os.environ.get("CHROMA_TENANT", ""),   # optional if key is scoped
     database=os.environ.get("CHROMA_DB", ""),     # optional if key is scoped
+    settings=Settings(
+        is_persistent=False,  # Disable persistence in serverless environment
+        anonymized_telemetry=False
+    )
 )
 
-print("[DEBUG] ChromaDB CloudClient initialized successfully")
 
 def query_vectordb(query: str) -> dict:
     """
     Returns: {"context": str, "docs_id": list[str]}
-    """
-    print(f"[DEBUG] Querying with: {query}")
-    
+    """    
     collection_name = os.environ.get("CHROMA_COLLECTION", "people_ops")
     collection = _client.get_collection(name=collection_name)
 
@@ -37,8 +31,6 @@ def query_vectordb(query: str) -> dict:
     # Put your own summarization/formatting here if you want.
     # For now, just join top docs with separators.
     context = "\n\n---\n\n".join(docs)
-    
-    print(f"[DEBUG] Query successful, returning {len(ids)} results")
 
     return {
         "context": context,
