@@ -1,6 +1,11 @@
 import os
 import chromadb
 
+# Set cache directory to /tmp (only writable dir in Vercel serverless)
+os.environ["HF_HOME"] = "/tmp/huggingface"
+os.environ["TRANSFORMERS_CACHE"] = "/tmp/transformers"
+os.environ["SENTENCE_TRANSFORMERS_HOME"] = "/tmp/sentence_transformers"
+
 # Create the client once at import time to avoid re-init on every request
 _client = chromadb.CloudClient(
     api_key=os.environ["CHROMA_API_KEY"],
