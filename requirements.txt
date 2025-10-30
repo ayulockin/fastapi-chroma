@@ -3,3 +3,5 @@ uvicorn
 chromadb-client
 pydantic
 onnxruntime
+python-dotenv
+tokenizers
